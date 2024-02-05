@@ -27,12 +27,7 @@ const (
 	BTSAND
 )
 
-type Block struct {
-	bType BlockType
-	pos   Position
-}
-
-type BlockGrid [][]Block
+type BlockGrid [][]BlockType
 
 var (
 	blocks      BlockGrid
@@ -47,11 +42,11 @@ const (
 )
 
 func init() {
-	blocks = make([][]Block, SCREENHEIGHT/SQUARESIDE)
-	blocksCopy = make([][]Block, SCREENHEIGHT/SQUARESIDE)
+	blocks = make(BlockGrid, SCREENHEIGHT/SQUARESIDE)
+	blocksCopy = make(BlockGrid, SCREENHEIGHT/SQUARESIDE)
 	for idx := range blocks {
-		blocks[idx] = make([]Block, SCREENWIDTH/SQUARESIDE)
-		blocksCopy[idx] = make([]Block, SCREENWIDTH/SQUARESIDE)
+		blocks[idx] = make([]BlockType, SCREENWIDTH/SQUARESIDE)
+		blocksCopy[idx] = make([]BlockType, SCREENWIDTH/SQUARESIDE)
 	}
 
 	activeBlock = Position{0, 0}
@@ -64,9 +59,33 @@ func blockPos2BlocksIdx(p Position) (int, int) {
 func clearBlocks() {
 	for idx1 := range blocks {
 		for idx2 := range blocks[idx1] {
-			blocks[idx1][idx2] = Block{}
+			blocks[idx1][idx2] = BTAIR
 		}
 	}
+}
+
+func updateblocks() {
+	for idx1 := range blocks {
+		copy(blocksCopy[idx1], blocks[idx1])
+	}
+
+	for iy := range blocks {
+		for ix, block := range blocks[iy] {
+			if block == BTSAND {
+				if iy+1 != len(blocks) {
+					if blocks[iy+1][ix] == BTAIR {
+						blocksCopy[iy][ix] = BTAIR
+						blocksCopy[iy+1][ix] = block
+					}
+				}
+			}
+		}
+	}
+
+	for idx1 := range blocks {
+		copy(blocks[idx1], blocksCopy[idx1])
+	}
+
 }
 
 func (g *Game) Update() error {
@@ -84,14 +103,14 @@ func (g *Game) Update() error {
 	blocksIdx1, blocksIdx2 := blockPos2BlocksIdx(activeBlock)
 
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton0) {
-		blocks[blocksIdx1][blocksIdx2].bType = BTSAND
-		blocks[blocksIdx1][blocksIdx2].pos.x = activeBlock.x
-		blocks[blocksIdx1][blocksIdx2].pos.y = activeBlock.y
+		blocks[blocksIdx1][blocksIdx2] = BTSAND
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyC) {
 		clearBlocks()
 	}
+
+	updateblocks()
 
 	return nil
 }
@@ -107,9 +126,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	for idx1 := range blocks {
-		for _, block := range blocks[idx1] {
-			if block.bType != BTAIR {
-				vector.DrawFilledRect(screen, block.pos.x, block.pos.y, SQUARESIDE, SQUARESIDE, color.RGBA{200, 100, 100, 255}, true)
+		for idx2, block := range blocks[idx1] {
+			if block != BTAIR {
+				vector.DrawFilledRect(screen, float32(idx2*SQUARESIDE), float32(idx1*SQUARESIDE), SQUARESIDE, SQUARESIDE, color.RGBA{200, 100, 100, 255}, true)
 			}
 
 		}
@@ -125,7 +144,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 func main() {
 	ebiten.SetFullscreen(true)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
-	ebiten.SetWindowTitle("Hello, World!")
+	ebiten.SetWindowTitle("Falling Sand")
 	if err := ebiten.RunGame(&Game{}); err != nil {
 		log.Fatal(err)
 	}
