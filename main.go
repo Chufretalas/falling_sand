@@ -29,10 +29,19 @@ const (
 
 type BlockGrid [][]BlockType
 
+func (b *BlockGrid) clear() {
+	for idx1 := range *b {
+		for idx2 := range (*b)[idx1] {
+			(*b)[idx1][idx2] = BTAIR
+		}
+	}
+}
+
 var (
-	blocks      BlockGrid
-	blocksCopy  BlockGrid
-	activeBlock Position
+	blocks             BlockGrid
+	blocksCopy         BlockGrid
+	activeBlock        Position
+	updateDelayCounter int
 )
 
 const (
@@ -50,45 +59,15 @@ func init() {
 	}
 
 	activeBlock = Position{0, 0}
+	updateDelayCounter = 0
 }
 
 func blockPos2BlocksIdx(p Position) (int, int) {
 	return int(p.y / SQUARESIDE), int(p.x / SQUARESIDE)
 }
 
-func clearBlocks() {
-	for idx1 := range blocks {
-		for idx2 := range blocks[idx1] {
-			blocks[idx1][idx2] = BTAIR
-		}
-	}
-}
-
-func updateblocks() {
-	for idx1 := range blocks {
-		copy(blocksCopy[idx1], blocks[idx1])
-	}
-
-	for iy := len(blocks) - 1; iy >= 0; iy-- {
-		for ix, block := range blocks[iy] {
-			if block == BTSAND {
-				if iy+1 != len(blocks) {
-					if blocks[iy+1][ix] == BTAIR {
-						blocksCopy[iy][ix] = BTAIR
-						blocksCopy[iy+1][ix] = block
-					}
-				}
-			}
-		}
-	}
-
-	for idx1 := range blocks {
-		copy(blocks[idx1], blocksCopy[idx1])
-	}
-
-}
-
 func (g *Game) Update() error {
+
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		go ebiten.SetFullscreen(!ebiten.IsFullscreen())
 	}
@@ -98,7 +77,7 @@ func (g *Game) Update() error {
 
 	mouseX, mouseY := ebiten.CursorPosition()
 
-	if mouseX > 0 && mouseX <= SCREENWIDTH && mouseY > 0 && mouseY <= SCREENHEIGHT {
+	if mouseX >= 0 && mouseX <= SCREENWIDTH && mouseY >= 0 && mouseY <= SCREENHEIGHT {
 		activeBlock.x = float32(mouseX) - float32(mouseX%SQUARESIDE)
 		activeBlock.y = float32(mouseY) - float32(mouseY%SQUARESIDE)
 
@@ -114,17 +93,21 @@ func (g *Game) Update() error {
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyC) {
-		clearBlocks()
+		blocks.clear()
 	}
 
-	updateblocks()
+	updateDelayCounter++
+	if updateDelayCounter >= 4 {
+		updateblocks()
+		updateDelayCounter = 0
+	}
 
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	mouseX, mouseY := ebiten.CursorPosition()
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v\n, Mouse: x%v y%v", ebiten.ActualFPS(), mouseX, mouseY))
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v\nTPS: %v\nMouse: x%v y%v", ebiten.ActualFPS(), ebiten.ActualTPS(), mouseX, mouseY))
 
 	for y := 0; y <= SCREENHEIGHT; y += SQUARESIDE {
 		vector.StrokeLine(screen, 0, float32(y), SCREENWIDTH, float32(y), 1, color.RGBA{20, 20, 20, 10}, true)
@@ -153,6 +136,7 @@ func main() {
 	ebiten.SetFullscreen(true)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	ebiten.SetWindowTitle("Falling Sand")
+	ebiten.SetTPS(120)
 	if err := ebiten.RunGame(&Game{}); err != nil {
 		log.Fatal(err)
 	}
