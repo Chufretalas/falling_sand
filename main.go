@@ -69,7 +69,7 @@ func updateblocks() {
 		copy(blocksCopy[idx1], blocks[idx1])
 	}
 
-	for iy := range blocks {
+	for iy := len(blocks) - 1; iy >= 0; iy-- {
 		for ix, block := range blocks[iy] {
 			if block == BTSAND {
 				if iy+1 != len(blocks) {
@@ -97,13 +97,20 @@ func (g *Game) Update() error {
 	}
 
 	mouseX, mouseY := ebiten.CursorPosition()
-	activeBlock.x = float32(mouseX) - float32(mouseX%SQUARESIDE)
-	activeBlock.y = float32(mouseY) - float32(mouseY%SQUARESIDE)
 
-	blocksIdx1, blocksIdx2 := blockPos2BlocksIdx(activeBlock)
+	if mouseX > 0 && mouseX <= SCREENWIDTH && mouseY > 0 && mouseY <= SCREENHEIGHT {
+		activeBlock.x = float32(mouseX) - float32(mouseX%SQUARESIDE)
+		activeBlock.y = float32(mouseY) - float32(mouseY%SQUARESIDE)
 
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButton0) {
-		blocks[blocksIdx1][blocksIdx2] = BTSAND
+		blocksIdx1, blocksIdx2 := blockPos2BlocksIdx(activeBlock)
+
+		if ebiten.IsMouseButtonPressed(ebiten.MouseButton0) {
+			blocks[blocksIdx1][blocksIdx2] = BTSAND
+		}
+
+		if ebiten.IsMouseButtonPressed(ebiten.MouseButton2) {
+			blocks[blocksIdx1][blocksIdx2] = BTAIR
+		}
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyC) {
@@ -116,7 +123,8 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v\n", ebiten.ActualFPS()))
+	mouseX, mouseY := ebiten.CursorPosition()
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v\n, Mouse: x%v y%v", ebiten.ActualFPS(), mouseX, mouseY))
 
 	for y := 0; y <= SCREENHEIGHT; y += SQUARESIDE {
 		vector.StrokeLine(screen, 0, float32(y), SCREENWIDTH, float32(y), 1, color.RGBA{20, 20, 20, 10}, true)
