@@ -73,7 +73,8 @@ func updateblocks() {
 								blocksCopy[iy][ix] = block
 								break
 							}
-							if blocks[current_y][ix] == BTAIR {
+							// TODO: if sand blocks start eating other blocks, this might be the problem, but it seens fine now
+							if blocksCopy[current_y][ix] == BTAIR {
 								if blocksCopy[iy+1][ix] == BTAIR {
 									blocksCopy[iy+1][ix] = block
 								}
