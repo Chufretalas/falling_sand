@@ -21,7 +21,7 @@ type Position struct {
 }
 
 func blockPos2BlocksIdx(p Position) (int, int) {
-	return int(p.y / float32(squareSide)), int(p.x / float32(squareSide))
+	return int(p.y / float32(squareSize[squareSizeIdx])), int(p.x / float32(squareSize[squareSizeIdx]))
 }
 
 var (
@@ -30,7 +30,8 @@ var (
 	activeBlock        Position
 	updateDelayCounter int
 	updateDelayMax     int
-	squareSide         int // possible values: 1, 2, 3, 4, 5, 6, 10, 20
+	squareSize         []int
+	squareSizeIdx      int
 	cSize              int // cursorSize, default is 0
 )
 
@@ -45,7 +46,8 @@ func init() {
 	activeBlock = Position{0, 0}
 	updateDelayMax = 8
 	updateDelayCounter = 0
-	squareSide = 20
+	squareSize = []int{1, 2, 3, 4, 5, 6, 10, 20}
+	squareSizeIdx = 0
 	cSize = 0
 	blocks.init()
 	blocksCopy.init()
@@ -64,8 +66,8 @@ func (g *Game) Update() error {
 
 	mouseX, mouseY := ebiten.CursorPosition()
 
-	activeBlock.x = float32(mouseX) - float32(mouseX%squareSide)
-	activeBlock.y = float32(mouseY) - float32(mouseY%squareSide)
+	activeBlock.x = float32(mouseX) - float32(mouseX%squareSize[squareSizeIdx])
+	activeBlock.y = float32(mouseY) - float32(mouseY%squareSize[squareSizeIdx])
 
 	blocksIdx1, blocksIdx2 := blockPos2BlocksIdx(activeBlock)
 
@@ -96,10 +98,24 @@ func (g *Game) Update() error {
 		cSize--
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && cSize < 15 {
+	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && cSize < 20 {
 		cSize++
 	}
 	// End Chance cursor size
+
+	// Chance square size
+	if inpututil.IsKeyJustPressed(ebiten.KeyK) && squareSizeIdx > 0 {
+		squareSizeIdx--
+		blocks.init()
+		blocksCopy.init()
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyL) && squareSizeIdx < len(squareSize)-1 {
+		squareSizeIdx++
+		blocks.init()
+		blocksCopy.init()
+	}
+	// End Chance square size
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyC) {
 		blocks.clear()
@@ -115,23 +131,23 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	for y := 0; y <= SCREENHEIGHT; y += squareSide {
+	for y := 0; y <= SCREENHEIGHT; y += squareSize[squareSizeIdx] {
 		vector.StrokeLine(screen, 0, float32(y), SCREENWIDTH, float32(y), 1, color.RGBA{20, 20, 20, 10}, true)
 	}
-	for x := 0; x <= SCREENWIDTH; x += squareSide {
+	for x := 0; x <= SCREENWIDTH; x += squareSize[squareSizeIdx] {
 		vector.StrokeLine(screen, float32(x), 0, float32(x), SCREENHEIGHT, 1, color.RGBA{20, 20, 20, 10}, true)
 	}
 
 	for idx1 := range blocks {
 		for idx2, block := range blocks[idx1] {
 			if block != BTAIR {
-				vector.DrawFilledRect(screen, float32(idx2*squareSide), float32(idx1*squareSide), float32(squareSide), float32(squareSide), color.RGBA{200, 100, 100, 255}, true)
+				vector.DrawFilledRect(screen, float32(idx2*squareSize[squareSizeIdx]), float32(idx1*squareSize[squareSizeIdx]), float32(squareSize[squareSizeIdx]), float32(squareSize[squareSizeIdx]), color.RGBA{200, 100, 100, 255}, true)
 			}
 
 		}
 	}
 
-	vector.StrokeRect(screen, activeBlock.x-float32(cSize*squareSide), activeBlock.y-float32(cSize*squareSide), float32(squareSide*(cSize*2+1)), float32(squareSide*(cSize*2+1)), 2, color.RGBA{255, 255, 255, 255}, true)
+	vector.StrokeRect(screen, activeBlock.x-float32(cSize*squareSize[squareSizeIdx]), activeBlock.y-float32(cSize*squareSize[squareSizeIdx]), float32(squareSize[squareSizeIdx]*(cSize*2+1)), float32(squareSize[squareSizeIdx]*(cSize*2+1)), 2, color.RGBA{255, 255, 255, 255}, true)
 
 	mouseX, mouseY := ebiten.CursorPosition()
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v\nTPS: %v\nMouse: x%v y%v", ebiten.ActualFPS(), ebiten.ActualTPS(), mouseX, mouseY))

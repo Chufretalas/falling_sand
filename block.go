@@ -10,9 +10,9 @@ const (
 type BlockGrid [][]BlockType
 
 func (b *BlockGrid) init() {
-	(*b) = make(BlockGrid, SCREENHEIGHT/squareSide)
+	(*b) = make(BlockGrid, SCREENHEIGHT/squareSize[squareSizeIdx])
 	for idx := range blocks {
-		(*b)[idx] = make([]BlockType, SCREENWIDTH/squareSide)
+		(*b)[idx] = make([]BlockType, SCREENWIDTH/squareSize[squareSizeIdx])
 	}
 }
 
