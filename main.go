@@ -49,7 +49,7 @@ func init() {
 	updateDelayMax = 8
 	updateDelayCounter = 0
 	squareSize = []int{1, 2, 3, 4, 5, 6, 10, 20}
-	squareSizeIdx = 5
+	squareSizeIdx = 7
 	cSize = 0
 	blocks.init()
 	blocksCopy.init()
@@ -154,8 +154,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	vector.StrokeRect(screen, activeBlock.x-float32(cSize*squareSize[squareSizeIdx]), activeBlock.y-float32(cSize*squareSize[squareSizeIdx]), float32(squareSize[squareSizeIdx]*(cSize*2+1)), float32(squareSize[squareSizeIdx]*(cSize*2+1)), 2, color.RGBA{255, 255, 255, 255}, true)
 
-	mouseX, mouseY := ebiten.CursorPosition()
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v\nTPS: %v\nMouse: x%v y%v", ebiten.ActualFPS(), ebiten.ActualTPS(), mouseX, mouseY))
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("LMB: put sand | RMB: remove sand | C: clear screen | K/L: change resolution | Up/Down: change cursor size\nFPS: %v\nTPS: %v\n", ebiten.ActualFPS(), ebiten.ActualTPS()))
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
