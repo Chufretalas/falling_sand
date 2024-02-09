@@ -2,6 +2,7 @@ package main
 
 import "math/rand"
 
+// TODO: optimize this with goroutines if possible
 func updateblocks() {
 
 	blocksCopy.clear()

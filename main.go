@@ -27,6 +27,7 @@ func blockPos2BlocksIdx(p Position) (int, int) {
 var (
 	blocks             BlockGrid
 	blocksCopy         BlockGrid
+	colorGrid          ColorGrid
 	activeBlock        Position
 	updateDelayCounter int
 	updateDelayMax     int
@@ -38,6 +39,7 @@ var (
 const (
 	SCREENWIDTH  = 1920
 	SCREENHEIGHT = 1080
+	HUE_SHIFT    = 0.5 //TODO: do a continuous hue shift on the colorGrid (actually pretty hard)
 )
 
 // ---------------------------------------- START EBITENGINE FUNCTIONS ---------------------------------------- //
@@ -47,10 +49,11 @@ func init() {
 	updateDelayMax = 8
 	updateDelayCounter = 0
 	squareSize = []int{1, 2, 3, 4, 5, 6, 10, 20}
-	squareSizeIdx = 0
+	squareSizeIdx = 5
 	cSize = 0
 	blocks.init()
 	blocksCopy.init()
+	colorGrid.init()
 }
 
 func (g *Game) Update() error {
@@ -108,12 +111,14 @@ func (g *Game) Update() error {
 		squareSizeIdx--
 		blocks.init()
 		blocksCopy.init()
+		colorGrid.init()
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyL) && squareSizeIdx < len(squareSize)-1 {
 		squareSizeIdx++
 		blocks.init()
 		blocksCopy.init()
+		colorGrid.init()
 	}
 	// End Chance square size
 
@@ -141,7 +146,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for idx1 := range blocks {
 		for idx2, block := range blocks[idx1] {
 			if block != BTAIR {
-				vector.DrawFilledRect(screen, float32(idx2*squareSize[squareSizeIdx]), float32(idx1*squareSize[squareSizeIdx]), float32(squareSize[squareSizeIdx]), float32(squareSize[squareSizeIdx]), color.RGBA{200, 100, 100, 255}, true)
+				vector.DrawFilledRect(screen, float32(idx2*squareSize[squareSizeIdx]), float32(idx1*squareSize[squareSizeIdx]), float32(squareSize[squareSizeIdx]), float32(squareSize[squareSizeIdx]), colorGrid[idx1][idx2], true)
 			}
 
 		}
